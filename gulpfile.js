@@ -7,6 +7,7 @@ var compass = require('gulp-compass');
 var connect = require('gulp-connect');
 var gulpif = require('gulp-if');
 var uglify = require('gulp-uglify');
+var minifyHTML = require('gulp-minify-html');
 
 var env = process.env.NODE_ENV || 'development';
 
@@ -18,7 +19,7 @@ if (env === 'development'){
     outputDir = 'builds/production/';
     sassStyle = 'compressed';
 }
-console.log(sassStyle);
+
 var coffeeSources = ['components/coffee/tagline.coffee'];
 var jsSources =[
     'components/scripts/rclick.js',
@@ -29,8 +30,6 @@ var jsSources =[
 var sassSources= ['components/sass/style.scss'];
 var htmlSources=[outputDir+'*.html'];
 var jsonSources=[outputDir+'js/*.json'];
-
-
 
 gulp.task('coffee',function(){
     gulp.src(coffeeSources)
@@ -62,12 +61,14 @@ gulp.task('watch',function(){
     gulp.watch(coffeeSources,['coffee']);
     gulp.watch(jsSources,['js']);
     gulp.watch('components/sass/*.scss',['compass']);
-    gulp.watch(htmlSources,['html']);
+    gulp.watch('builds/development/*.html',['html']);
     gulp.watch(jsonSources,['json']);
 })
 
 gulp.task('html',function(){
-    gulp.src(htmlSources)
+    gulp.src('builds/development/*.html')
+        .pipe(gulpif(env==='production',minifyHTML()))
+        .pipe(gulpif(env==='production',gulp.dest(outputDir)))
         .pipe(connect.reload())
 })
 
