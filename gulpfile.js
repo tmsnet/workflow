@@ -9,6 +9,8 @@ var gulpif = require('gulp-if');
 var uglify = require('gulp-uglify');
 var minifyHTML = require('gulp-minify-html');
 var jsonminify = require('gulp-jsonminify');
+var imagemin = require('gulp-imagemin');
+var pngcrush = require('imagemin-pngcrush');
 
 var env = process.env.NODE_ENV || 'development';
 
@@ -20,6 +22,8 @@ if (env === 'development'){
     outputDir = 'builds/production/';
     sassStyle = 'compressed';
 }
+
+console.log(outputDir);
 
 var coffeeSources = ['components/coffee/tagline.coffee'];
 var jsSources =[
@@ -64,12 +68,24 @@ gulp.task('watch',function(){
     gulp.watch('components/sass/*.scss',['compass']);
     gulp.watch('builds/development/*.html',['html']);
     gulp.watch('builds/development/js/*.json',['json']);
+    gulp.watch('builds/development/images/**/*.*',['images']);
 })
 
 gulp.task('html',function(){
     gulp.src('builds/development/*.html')
         .pipe(gulpif(env==='production',minifyHTML()))
         .pipe(gulpif(env==='production',gulp.dest(outputDir)))
+        .pipe(connect.reload())
+})
+
+gulp.task('images',function(){
+    gulp.src('builds/development/images/**/*.*')
+        .pipe(gulpif(env==='production',imagemin({
+            progressive:true,
+            svgoPlugins:[{removeViewBox:false}],
+            use:[pngcrush()]
+        })))
+        .pipe(gulpif(env==='production',gulp.dest(outputDir+'images')))
         .pipe(connect.reload())
 })
 
@@ -88,4 +104,4 @@ gulp.task('connect',function(){
     });
 })
 
-gulp.task('default',['html','json','coffee','js','compass','connect','watch']);
+gulp.task('default',['html','json','coffee','js','compass','images','connect','watch']);
